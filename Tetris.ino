@@ -13,18 +13,18 @@
 #define FINISH_COLUMN 9		// the column #8 of our displayed matrix (it is outside)
 
 #define DEBOUNCE_BUTTON_DELAY 50
-#define DEBOUNCE_JOYSTICK_DELAY 50
+#define DEBOUNCE_JOYSTICK_DELAY 25
 #define JOYSTICK_HORIZONTAL_LEFT 1023	// the VRx value when joystick is inclined to left-most
 #define JOYSTICK_HORIZONTAL_RIGHT 0
 #define JOYSTICK_VERTICAL_UP 0			// the VRy value when joystick is inclined to up-most
 #define JOYSTICK_VERTICAL_DOWN 1023
-#define JOYSTICK_THRESHOLD 200				// a value of 200 means an X value from 0 to 200 will determine the joystick to trigger an event for left movement  
+#define JOYSTICK_THRESHOLD 100				// a value of 10 means an X value from 0 to 10 will determine the joystick to trigger an event for left movement  
 
 int gameState;	// current game state: 1 = waiting to begin the gameplay; 2 = gameplay; 3 = waiting to start again the game
 int lastGameState;	// it can help saying if the gameState changed
 
-int buttonState = 1;				// 1 = up, 0 = down button of joystick
-int lastButtonState = 1;
+int buttonState;				// 1 = up, 0 = down button of joystick
+int lastButtonState;
 unsigned long lastDebounceButtonTime;	// used for the joystick's button
 int horizontalState;			// -1 = left inclined, 0 = centered, 1 = right inclined joystick
 int lastHorizontalState;
@@ -54,6 +54,12 @@ void setup() {
 	Serial.begin(9600);
 	gameState = 1;
 	lastGameState = -1;
+	buttonState = 1;
+	lastButtonState = 1;
+	horizontalState = 0;
+	lastHorizontalState = 0;
+	verticalState = 0;
+	lastVerticalState = 0;
 	randomSeed(analogRead(0));
 	lcdSetup();
 	joystickSetup();

@@ -1,10 +1,12 @@
 #define NUMBER_OF_PIECES 8
 #define STARTING_SPEED 500		// lower = faster
+#define HORIZONTAL_MOVEMENT_DELAY 200
 
 int score;		// current score
 int level;		// current level
 int descendingDelay;
 unsigned long lastDescendingTime;	// last time we updated the matrix for descending a piece
+unsigned long lastHorizontalMovementTime;
 
 struct Piece {
 	int id;
@@ -103,8 +105,15 @@ void gamePlayLoop() {
 		lastDescendingTime = millis();
 	}
 
-	//checkHorizontalAxis(moveHorizontally);
-
+	// for continous horizontal movement:
+	if (millis() - lastHorizontalMovementTime > HORIZONTAL_MOVEMENT_DELAY) {
+		if (horizontalState) {
+			moveHorizontally(horizontalState);
+		}	
+	}
+	
+	checkHorizontalAxis(moveHorizontally);
+	
 	if (millis() - lastDescendingTime > descendingDelay) {
 		if (checkToDescend()) {
 			descendPiece();
@@ -226,7 +235,7 @@ void setGameMatrixPattern(int option) {
 
 // movement (-1 or 1) tells us where the player wants to move the piece, to the left (-1) or to the right (1)
 void moveHorizontally(int movement) {
-	int colExtremeDot;	// the column where lies the most extreme point (on the horizontal line to the left/right) in the structure of our piece
+	int ableToMove = true;	
 	int startingCol;
 	switch (movement) {
 		case -1:		// move towards LEFT
@@ -239,8 +248,8 @@ void moveHorizontally(int movement) {
 
 	// trying to treat both cases using just once the 2 nested for-loops
 	for (int row = 0; row < currentPiece.boundingBoxSize; row++) {
-		int mostExtremeDotColumn;
-		for (int mostExtremeDotColumn = startingCol; abs(mostExtremeDotColumn - startingCol) < currentPiece.boundingBoxSize; mostExtremeDotColumn -= movement) {
+		int mostExtremeDotColumn;	// the column where lies the most extreme point (on the horizontal line to the left/right) in the structure of our piece
+		for (mostExtremeDotColumn = startingCol; abs(mostExtremeDotColumn - startingCol) < currentPiece.boundingBoxSize; mostExtremeDotColumn -= movement) {
 			if (currentPiece.shape[row][mostExtremeDotColumn] == 1) {
 				break;
 			}
@@ -251,9 +260,18 @@ void moveHorizontally(int movement) {
 			int interestColumn = currentPiece.column + mostExtremeDotColumn + movement;
 			int interestRow = currentPiece.row + row;
 
-			//if (interestRow 
-			
+			if (gameMatrix[interestRow][interestColumn] == 1) {
+				ableToMove = false;
+				break;
+			}
 		}
+	}
+
+	if (ableToMove) {
+		setGameMatrixPattern(0);
+		currentPiece.column += movement;
+		setGameMatrixPattern(1);
+		lastHorizontalMovementTime = millis();
 	}
 }
 
