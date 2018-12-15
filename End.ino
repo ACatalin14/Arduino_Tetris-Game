@@ -1,6 +1,5 @@
 #define LED_CHANGING_DELAY 120
 #define BLINK_OPTION_DELAY 1200
-#define DEBOUNCE_BUTTON_DELAY_TWO 50
 
 unsigned long lastChangedLedTime;
 int turnOnLeds;				// a boolean used for alternating the effect of turning on and off the leds
@@ -8,13 +7,9 @@ int gameMatrixLive[8][8];	// the live matrix shown on the leds
 int currentLedNumber;		// the current led to check if we want to turn on or off; it takes values between 0-63
 unsigned long lastBlinkTime;	// last time when the cursor option blinked
 int arrowOnScreen;				// 1 = the arrow is showing for the option, 0 = it is not showing
-int buttonState2;				// 1 = up, 0 = down button of joystick
-int lastButtonState2;
-unsigned long lastDebounceButtonTime2;	// used for the joystick's button
 
 void gameEndSetup() {
 	lcd.clear();
-	//lcd.home();
 	lcd.setCursor(3, 0);
 	lcd.print("GAME OVER!");
 	lcd.setCursor(0, 1);
@@ -32,9 +27,6 @@ void gameEndSetup() {
 
 	currentLedNumber = 0;
 	turnOnLeds = true;
-
-	buttonState2 = 1;
-	lastButtonState2 = 1;
 }
 
 void gameEndLoop() {
@@ -77,7 +69,11 @@ void gameEndLoop() {
 	}
 
 	blinkOption();
-	checkButton2();	
+	checkButton(changeEndState);	
+}
+
+void changeEndState() {
+	gameState = 1;
 }
 
 void blinkOption() {
@@ -93,24 +89,4 @@ void blinkOption() {
 		}
 		lastBlinkTime = millis();
 	}
-}
-
-void checkButton2() {
-	int reading = digitalRead(JOYSTICK_BUTTON_PIN);
-
-	if (reading != lastButtonState2) {
-		lastDebounceButtonTime2 = millis();
-	}
-
-	if (millis() - lastDebounceButtonTime2 > DEBOUNCE_BUTTON_DELAY_TWO) {
-		if (reading != buttonState2) {
-			buttonState2 = reading;
-
-			if (buttonState2 == 1) {	// button was pressed entirely (down+up)
-				gameState = 1;
-			}
-		}
-	}
-
-	lastButtonState2 = reading;
 }

@@ -98,16 +98,12 @@ void gamePlaySetup() {
 }
 
 void gamePlayLoop() {
-	Serial.println("PlayLoop");
-	
 	if (currentPiece.id == -1) {
 		createPiece();
 		lastDescendingTime = millis();
 	}
 
 	if (millis() - lastDescendingTime > descendingDelay) {
-		Serial.print(" ");
-	Serial.print(currentPiece.rowsDescended);
 		if (checkToDescend()) {
 			descendPiece();
 		} else {
