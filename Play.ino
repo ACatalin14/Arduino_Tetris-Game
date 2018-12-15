@@ -8,7 +8,7 @@ unsigned long lastDescendingTime;	// last time we updated the matrix for descend
 
 struct Piece {
 	int id;
-	int shape[4][4];	// the initial shape of the piece
+	int shape[4][4];	// the current shape of the piece
 	int boundingBoxSize;// length of the square's edge of the boundig box (a number between 1 and 4)
 	int row, column;	// row/column between 0 and 7 of the boundigBox's top-left corner
 	int hasDescended;	// true when current piece descended completely
@@ -79,7 +79,7 @@ int patterns[8][4][4] = {
 void gamePlaySetup() {
 	// clear the gameMatrix
 	for (int row = 0; row < FINISH_LINE; row++) {
-		for (int col = 0; col < 8; col++) {
+		for (int col = START_COLUMN; col < FINISH_COLUMN; col++) {
 			gameMatrix[row][col] = 0;
 		}
 	}
@@ -102,6 +102,8 @@ void gamePlayLoop() {
 		createPiece();
 		lastDescendingTime = millis();
 	}
+
+	//checkHorizontalAxis(moveHorizontally);
 
 	if (millis() - lastDescendingTime > descendingDelay) {
 		if (checkToDescend()) {
@@ -126,15 +128,19 @@ void gamePlayLoop() {
 		lastDescendingTime = millis();
 	}
 
-	// check for joystick input
-
 	drawMatrix();
 }
 
 void drawMatrix() {
-	for (int row = START_LINE; row < FINISH_LINE; row++) {
+//	for (int row = START_LINE; row < FINISH_LINE; row++) {
+//		for (int col = START_COLUMN; col < FINISH_COLUMN; col++) {
+//			ledMatrix.setLed(0, col - START_COLUMN, row - START_LINE, gameMatrix[row][col]);
+//		}
+//	}
+
+	for (int row = 0; row < 8; row++) {
 		for (int col = 0; col < 8; col++) {
-			ledMatrix.setLed(0, col, row - START_LINE, gameMatrix[row][col]);
+			ledMatrix.setLed(0, col, row, gameMatrix[START_LINE + row][START_COLUMN + col]);
 		}
 	}
 }
@@ -149,18 +155,18 @@ void createPiece() {
 	switch (currentPiece.id) {
 		case 0:	// the dot piece
 			currentPiece.boundingBoxSize = 1;
-			currentPiece.row = 1;
-			currentPiece.column = 3;
+			currentPiece.row = START_LINE - 1;
+			currentPiece.column = START_COLUMN + 3;
 			break;
 		case 1:	// the I-piece
 			currentPiece.boundingBoxSize = 4;
-			currentPiece.row = 0;
-			currentPiece.column = 2;
+			currentPiece.row = START_LINE - 2;
+			currentPiece.column = START_COLUMN + 2;
 			break;
 		case 4:	// the O-piece
 			currentPiece.boundingBoxSize = 2;
-			currentPiece.row = 0;
-			currentPiece.column = 3;
+			currentPiece.row = START_LINE - 2;
+			currentPiece.column = START_COLUMN + 3;
 			break;
 		case 2:	// the J-piece
 		case 3:	// the L-piece
@@ -168,8 +174,8 @@ void createPiece() {
 		case 6:	// the T-piece
 		case 7:	// the Z-piece
 			currentPiece.boundingBoxSize = 3;
-			currentPiece.row = 0;
-			currentPiece.column = 2;
+			currentPiece.row = START_LINE - 2;
+			currentPiece.column = START_COLUMN + 2;
 	}
 
 	//setLedPattern(1);
@@ -180,10 +186,10 @@ void createPiece() {
 int checkToDescend() {
 	for (int col = 0; col < currentPiece.boundingBoxSize; col++) {
 		// try to find the lowest dot in the structure of our piece on the column col of the bounding box
-		int lowestDotRow = -1;
-		for (int row = 0; row < currentPiece.boundingBoxSize; row++) {
-			if (currentPiece.shape[row][col] == 1) {
-				lowestDotRow = row;
+		int lowestDotRow;
+		for (lowestDotRow = currentPiece.boundingBoxSize - 1; lowestDotRow >= 0; lowestDotRow--) {
+			if (currentPiece.shape[lowestDotRow][col] == 1) {
+				break;
 			}
 		}
 
@@ -214,6 +220,39 @@ void setGameMatrixPattern(int option) {
 			if (currentPiece.shape[row][col] == 1) {
 				gameMatrix[currentPiece.row + row][currentPiece.column + col] = option;
 			}
+		}
+	}
+}
+
+// movement (-1 or 1) tells us where the player wants to move the piece, to the left (-1) or to the right (1)
+void moveHorizontally(int movement) {
+	int colExtremeDot;	// the column where lies the most extreme point (on the horizontal line to the left/right) in the structure of our piece
+	int startingCol;
+	switch (movement) {
+		case -1:		// move towards LEFT
+			startingCol = 0;
+			break;
+		case 1:			// move piece towards RIGHT
+			startingCol = currentPiece.boundingBoxSize - 1;
+			break;
+	}
+
+	// trying to treat both cases using just once the 2 nested for-loops
+	for (int row = 0; row < currentPiece.boundingBoxSize; row++) {
+		int mostExtremeDotColumn;
+		for (int mostExtremeDotColumn = startingCol; abs(mostExtremeDotColumn - startingCol) < currentPiece.boundingBoxSize; mostExtremeDotColumn -= movement) {
+			if (currentPiece.shape[row][mostExtremeDotColumn] == 1) {
+				break;
+			}
+		}
+
+		if (mostExtremeDotColumn >= 0 && mostExtremeDotColumn < currentPiece.boundingBoxSize) { // our piece has a dot on the current row
+			// check if there is an object beside our piece at current row
+			int interestColumn = currentPiece.column + mostExtremeDotColumn + movement;
+			int interestRow = currentPiece.row + row;
+
+			//if (interestRow 
+			
 		}
 	}
 }

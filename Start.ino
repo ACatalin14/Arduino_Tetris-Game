@@ -9,7 +9,7 @@ int changedOption;				// tells us if we changed or not the option in the current
 void gameStartSetup() {
 	for (int row = 0; row < 8; row++) {
 		for (int col = 0; col < 8; col++) {
-			ledMatrix.setLed(0, col, row, 0);
+			ledMatrix.setLed(0, col, row, LOW);
 		}
 	}
 	
@@ -35,7 +35,8 @@ void gameStartLoop() {
 	//scrollWelcomeMessage();	// uncomment this for autoscrolling a title
 	
 	// last to execute:
-	checkJoystick();
+	checkButton(changeStartState);
+	checkHorizontalAxis(changeMenuOption);
 	checkMenu();	
 }
 
@@ -58,11 +59,6 @@ void scrollWelcomeMessage() {
 
 		lastScrollTime = millis();
 	}
-}
-
-void checkJoystick() {
-	checkButton(changeStartState);
-	checkHorizontalAxis(changeMenuOption);
 }
 
 void changeStartState() {

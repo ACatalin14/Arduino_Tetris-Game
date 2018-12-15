@@ -7,16 +7,18 @@
 #define JOYSTICK_X_PIN A1 	// VRx pin of the joystick
 #define JOYSTICK_Y_PIN A0 	// VRy pin of the joystick
 #define JOYSTICK_BUTTON_PIN 8		// SW pin of the joystick
-#define START_LINE 2		// the line #0 of our matrix (contained in our matrix)
+#define START_LINE 2		// the line #0 of our displayed matrix (it is inside our matrix)
 #define FINISH_LINE 10		// the "floor" line of our matrix (it is outside of the matrix)
+#define START_COLUMN 1		// the column #0 of our displayed matrix (it is inside)
+#define FINISH_COLUMN 9		// the column #8 of our displayed matrix (it is outside)
 
 #define DEBOUNCE_BUTTON_DELAY 50
-#define JOYSTICK_HORIZONTAL_LEFT 1023	// the VRx/VRy value when joystick is inclined to left-most (my joystick is inverted, and the Y-axis is my horizontal line)
+#define DEBOUNCE_JOYSTICK_DELAY 50
+#define JOYSTICK_HORIZONTAL_LEFT 1023	// the VRx value when joystick is inclined to left-most
 #define JOYSTICK_HORIZONTAL_RIGHT 0
-#define JOYSTICK_VERTICAL_UP 0			// the VRy/VRx value when joystick is inclined to up-most (I use X-axis as my vertical line)
+#define JOYSTICK_VERTICAL_UP 0			// the VRy value when joystick is inclined to up-most
 #define JOYSTICK_VERTICAL_DOWN 1023
 #define JOYSTICK_THRESHOLD 200				// a value of 200 means an X value from 0 to 200 will determine the joystick to trigger an event for left movement  
-#define DEBOUNCE_JOYSTICK_DELAY 50
 
 int gameState;	// current game state: 1 = waiting to begin the gameplay; 2 = gameplay; 3 = waiting to start again the game
 int lastGameState;	// it can help saying if the gameState changed
@@ -34,19 +36,19 @@ unsigned long lastDebounceVerticalTime;
 LiquidCrystal lcd(2, 3, 4, 5, 6, 7);
 LedControl ledMatrix = LedControl(12, 11, 10, 1);
 
-int gameMatrix[11][8] = {
-	{0, 0, 0, 0, 0, 0, 0, 0},	// imaginary line #-2, above our original matrix, made for spawning pieces
-	{0, 0, 0, 0, 0, 0, 0, 0},	// imaginary line #-1
-	{0, 0, 0, 0, 0, 0, 0, 0},	// line #0 of the printed matrix for the leds
-	{0, 0, 0, 0, 0, 0, 0, 0},	
-	{0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0, 0},	// line #7 of the printed matrix
-	{1, 1, 1, 1, 1, 1, 1, 1}	// imaginary line #8, the "floor" of the matrix
-};
+int gameMatrix[11][10] = {
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},	// imaginary line #-2, above our original matrix, made for spawning pieces
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},	// imaginary line #-1
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},	// line #0 of the printed matrix for the leds
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},	
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+	{1, 0, 0, 0, 0, 0, 0, 0, 0, 1},	// line #7 of the printed matrix
+	{1, 1, 1, 1, 1, 1, 1, 1, 1, 1}	// imaginary line #8, the "floor" of the matrix
+};									// also, I've added imaginary "walls" on the left and on the right side
 
 void setup() {
 	Serial.begin(9600);

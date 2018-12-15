@@ -21,7 +21,7 @@ void gameEndSetup() {
 	
 	for (int i = 0; i < 8; i++) {
 		for (int j = 0; j < 8; j++) {
-			gameMatrixLive[i][j] = gameMatrix[START_LINE + i][j];
+			gameMatrixLive[i][j] = gameMatrix[START_LINE + i][START_COLUMN + j];
 		}
 	}
 
@@ -53,7 +53,7 @@ void gameEndLoop() {
 			}
 		} else {
 			if (millis() - lastChangedLedTime > LED_CHANGING_DELAY) {
-				while (currentLedNumber < 64 && gameMatrix[START_LINE + currentLedRow][currentLedCol] == 1) {
+				while (currentLedNumber < 64 && gameMatrix[START_LINE + currentLedRow][START_COLUMN + currentLedCol] == 1) {
 					currentLedNumber++;
 					currentLedRow = currentLedNumber / 8;
 					currentLedCol = currentLedNumber % 8;
