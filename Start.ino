@@ -13,7 +13,11 @@ void gameStartSetup() {
 		}
 	}
 	
-	lcd.clear();
+	//lcd.clear();
+	lcd.setCursor(0, 0);
+	lcd.print("                ");
+	lcd.setCursor(0, 1);
+	lcd.print("                ");
 	lastScrollTime = millis();
 	strcpy(welcomeMessage, "  Welcome to Catalin's Tetris Game  ");
 

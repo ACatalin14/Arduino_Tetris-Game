@@ -1,8 +1,7 @@
 #define NUMBER_OF_PIECES 8
-#define STARTING_SPEED 1000		// lower = faster
+#define STARTING_SPEED 750		// lower = faster
 #define HORIZONTAL_MOVEMENT_DELAY 200
 
-int score;		// current score
 int level;		// current level
 int descendingDelay;
 unsigned long lastDescendingTime;	// last time we updated the matrix for descending a piece
@@ -113,7 +112,6 @@ void gamePlayLoop() {
 	}
 	
 	checkHorizontalAxis(moveHorizontally);
-
 	checkButton(rotatePiece);
 	
 	if (millis() - lastDescendingTime > descendingDelay) {
@@ -123,17 +121,18 @@ void gamePlayLoop() {
 			currentPiece.hasDescended = true;
 		}
 
-		if (currentPiece.hasDescended) {	// getting ready to generate another piece
-			currentPiece.hasDescended = false;
-			currentPiece.id = -1;
-			
+		if (currentPiece.hasDescended) {
 			if (currentPiece.rowsDescended == 0) {	// check for game over
 				gameState = 3;
-			} else {
-				currentPiece.rowsDescended = 0;
 			}
 
-			// check for score increasing
+			// getting ready to generate another piece
+			currentPiece.id = -1;
+			currentPiece.hasDescended = false;
+			currentPiece.rowsDescended = 0;
+			checkScore();
+			
+
 		}
 
 		lastDescendingTime = millis();
@@ -242,6 +241,7 @@ void moveHorizontally(int movement) {
 			break;
 	}
 
+	// first we check if we can move horizontally
 	// trying to treat both cases using just once the 2 nested for-loops
 	for (int row = 0; row < currentPiece.boundingBoxSize; row++) {
 		int mostExtremeDotColumn;	// the column where lies the most extreme point (on the horizontal line to the left/right) in the structure of our piece
@@ -311,6 +311,68 @@ int checkToRotate(int rotatedMatrix[4][4]) {
 	return true;
 }
 
+void checkScore() {
+	int completeRows = 0;	// count the full rows
+
+	for (int row = START_LINE; row < FINISH_LINE; row++) {
+		int complete = true;
+		for (int col = START_COLUMN; col < FINISH_COLUMN; col++) {
+			if (gameMatrix[row][col] == 0) {
+				complete = false;
+				break;
+			}
+		}
+		if (complete) {
+			completeRows++;
+		}
+	}
+
+	switch (completeRows) {
+		case 0:
+			break;
+		case 1:
+			score += 40 * level;
+			break;
+		case 2:
+			score += 100 * level;
+			break;
+		case 3:
+			score += 300 * level;
+			break;
+		case 4:
+			score += 1200 * level;
+			break;
+		default:
+			Serial.println("How?! IT IS IMPOSSIBLE!");
+	}
+	Serial.println(completeRows);
+	if (completeRows > 0) {
+		lcd.setCursor(7, 1);
+		lcd.print(score);
+		eraseCompleteRows();
+	}
+}
+
+void eraseCompleteRows() {
+	// check each line if it is a full row
+	for (int currentRow = START_LINE; currentRow < FINISH_LINE; currentRow++) {
+		int complete = true;
+		for (int col = START_COLUMN; col < FINISH_COLUMN; col++) {
+			if (gameMatrix[currentRow][col] == 0) {
+				complete = false;
+				break;
+			}
+		}
+		if (complete) {	// if we found a full row, we erase it by making succesive assignments from bottom to top
+			for (int col = START_COLUMN; col < FINISH_COLUMN; col++) {
+				for (int row = currentRow; row >= START_LINE; row--) {
+					gameMatrix[row][col] = gameMatrix[row - 1][col];
+				}
+			}
+		}
+	}
+}
+
 void assign(int a[4][4], int b[4][4]) {
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
@@ -318,14 +380,3 @@ void assign(int a[4][4], int b[4][4]) {
 		}
 	}
 }
-
-// returns 0 is setting was succesful and -1 otherwise
-//int setLedIfPossible(int col, int row, int setting) {
-//	if (col >= 0 && col < 8 && 
-//		row >= 0 && row < 8 && 
-//		(setting == LOW || setting == HIGH)	) {
-//		ledMatrix.setLed(0, col, row, setting);
-//		return 0;
-//	}
-//	return -1;
-//}

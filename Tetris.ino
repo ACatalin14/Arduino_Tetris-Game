@@ -32,6 +32,7 @@ unsigned long lastDebounceHorizontalTime;
 int verticalState;				// -1 = down inclined, 0 = centered, 1 = up inclined joystick
 int lastVerticalState;
 unsigned long lastDebounceVerticalTime;
+int score;		// current score
 
 LiquidCrystal lcd(2, 3, 4, 5, 6, 7);
 LedControl ledMatrix = LedControl(12, 11, 10, 1);
