@@ -1,5 +1,5 @@
 #define NUMBER_OF_PIECES 8
-#define STARTING_SPEED 500		// lower = faster
+#define STARTING_SPEED 1000		// lower = faster
 #define HORIZONTAL_MOVEMENT_DELAY 200
 
 int score;		// current score
@@ -113,6 +113,8 @@ void gamePlayLoop() {
 	}
 	
 	checkHorizontalAxis(moveHorizontally);
+
+	checkButton(rotatePiece);
 	
 	if (millis() - lastDescendingTime > descendingDelay) {
 		if (checkToDescend()) {
@@ -141,12 +143,6 @@ void gamePlayLoop() {
 }
 
 void drawMatrix() {
-//	for (int row = START_LINE; row < FINISH_LINE; row++) {
-//		for (int col = START_COLUMN; col < FINISH_COLUMN; col++) {
-//			ledMatrix.setLed(0, col - START_COLUMN, row - START_LINE, gameMatrix[row][col]);
-//		}
-//	}
-
 	for (int row = 0; row < 8; row++) {
 		for (int col = 0; col < 8; col++) {
 			ledMatrix.setLed(0, col, row, gameMatrix[START_LINE + row][START_COLUMN + col]);
@@ -273,6 +269,46 @@ void moveHorizontally(int movement) {
 		setGameMatrixPattern(1);
 		lastHorizontalMovementTime = millis();
 	}
+}
+
+void rotatePiece() {
+	int dim = currentPiece.boundingBoxSize;	// our dimension
+	int rotatedShape[4][4];
+	
+	for (int i = 0; i < dim; i++) {	// calculate the rotated matrix
+		for (int j = 0; j < dim; j++) {
+			rotatedShape[i][j] = currentPiece.shape[dim - 1 - j][i];
+		}
+	}
+	
+	if (checkToRotate(rotatedShape)) {
+		// now assign the rotated matrix to our shape
+		for (int i = 0; i < dim; i++) {
+			for (int j = 0; j < dim; j++) {
+				currentPiece.shape[i][j] = rotatedShape[i][j];
+			}
+		}
+	}
+
+	setGameMatrixPattern(1);
+}
+
+// returns true if we are able to make a rotation, and false otherwise
+int checkToRotate(int rotatedMatrix[4][4]) {
+	setGameMatrixPattern(0);	// we don't want to test if the rotated piece intersects with initial itself
+	
+	// check if a dot from our shape (from the bounding box) is overlapping a dot from our game matrix
+	for (int row = 0; row < currentPiece.boundingBoxSize; row++) {
+		for (int col = 0; col < currentPiece.boundingBoxSize; col++) {
+			int interestRow = currentPiece.row + row;
+			int interestCol = currentPiece.column + col;
+			if (rotatedMatrix[row][col] == 1 &&
+				rotatedMatrix[row][col] == gameMatrix[interestRow][interestCol]) {
+					return false;	// we're not able to rotate
+			}
+		}
+	}
+	return true;
 }
 
 void assign(int a[4][4], int b[4][4]) {
