@@ -1,9 +1,12 @@
 #define NUMBER_OF_PIECES 8
-#define STARTING_SPEED 750		// lower = faster
+#define STARTING_SPEED 1000		// lower = faster
 #define HORIZONTAL_MOVEMENT_DELAY 200
+#define SOFT_DROP_DELAY 100
+#define HARD_DROP_DELAY 5
 
 int level;		// current level
-int descendingDelay;
+int usualDescendingDelay;	// this is the normal delay for descending a piece at a given level
+int descendingDelay;		// a variable which can be modified by soft drops of pieces
 unsigned long lastDescendingTime;	// last time we updated the matrix for descending a piece
 unsigned long lastHorizontalMovementTime;
 
@@ -94,7 +97,8 @@ void gamePlaySetup() {
 	currentPiece.id = -1;
 	score = 0;
 	level = 1;
-	descendingDelay = STARTING_SPEED;
+	usualDescendingDelay = STARTING_SPEED;
+	descendingDelay = usualDescendingDelay;
 	lastDescendingTime = millis();
 }
 
@@ -113,10 +117,21 @@ void gamePlayLoop() {
 	
 	checkHorizontalAxis(moveHorizontally);
 	checkButton(rotatePiece);
+	checkVerticalAxis(dropPiece);
+
+	if (verticalState == 0) {
+		descendingDelay = usualDescendingDelay;
+	}
 	
 	if (millis() - lastDescendingTime > descendingDelay) {
 		if (checkToDescend()) {
 			descendPiece();
+
+			if (descendingDelay == SOFT_DROP_DELAY) {
+				score += 1;
+				lcd.setCursor(7, 1);
+				lcd.print(String(score));
+			}
 		} else {
 			currentPiece.hasDescended = true;
 		}
@@ -130,9 +145,8 @@ void gamePlayLoop() {
 			currentPiece.id = -1;
 			currentPiece.hasDescended = false;
 			currentPiece.rowsDescended = 0;
-			checkScore();
 			
-
+			checkScore();
 		}
 
 		lastDescendingTime = millis();
@@ -348,7 +362,7 @@ void checkScore() {
 	Serial.println(completeRows);
 	if (completeRows > 0) {
 		lcd.setCursor(7, 1);
-		lcd.print(score);
+		lcd.print(String(score));
 		eraseCompleteRows();
 	}
 }
@@ -370,6 +384,23 @@ void eraseCompleteRows() {
 				}
 			}
 		}
+	}
+}
+
+// dropType = -1 for soft drop OR 1 for hard drop
+void dropPiece(int dropType) {
+	switch (dropType) {
+		case -1:
+			descendingDelay = SOFT_DROP_DELAY;
+			break;
+		case 1:
+			while (checkToDescend()) {
+				descendPiece();
+				score += 2;
+			}
+			lcd.setCursor(7, 1);
+			lcd.print(String(score));
+			break;
 	}
 }
 
