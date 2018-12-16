@@ -1,14 +1,18 @@
 #define NUMBER_OF_PIECES 8
-#define STARTING_SPEED 1000		// lower = faster
-#define HORIZONTAL_MOVEMENT_DELAY 200
+#define STARTING_SPEED 1750		// lower = faster
+#define HORIZONTAL_MOVEMENT_DELAY 250
 #define SOFT_DROP_DELAY 100
-#define HARD_DROP_DELAY 5
+#define CHECKING_FULL_ROWS_DELAY 100
+#define DIFFICULTY_INCREASING_SPEED 350
+#define DIFFICULTY_INCREASING_THRESHOLD 5	// number of full rows needed to get to the next level
 
 int level;		// current level
 int usualDescendingDelay;	// this is the normal delay for descending a piece at a given level
 int descendingDelay;		// a variable which can be modified by soft drops of pieces
 unsigned long lastDescendingTime;	// last time we updated the matrix for descending a piece
 unsigned long lastHorizontalMovementTime;
+int totalFullRows;
+int didHardDrop;
 
 struct Piece {
 	int id;
@@ -97,9 +101,15 @@ void gamePlaySetup() {
 	currentPiece.id = -1;
 	score = 0;
 	level = 1;
+	totalFullRows = 0;
+	didHardDrop = false;
 	usualDescendingDelay = STARTING_SPEED;
 	descendingDelay = usualDescendingDelay;
 	lastDescendingTime = millis();
+	lastHorizontalMovementTime = millis();
+
+	Serial.println();
+	Serial.println(" > NEW GAME ");
 }
 
 void gamePlayLoop() {
@@ -119,11 +129,18 @@ void gamePlayLoop() {
 	checkButton(rotatePiece);
 	checkVerticalAxis(dropPiece);
 
-	if (verticalState == 0) {
+	if (verticalState == 0) {	// check if there is not a sofr drop turned on
 		descendingDelay = usualDescendingDelay;
 	}
 	
-	if (millis() - lastDescendingTime > descendingDelay) {
+	if (millis() - lastDescendingTime > descendingDelay || didHardDrop) {
+		if (didHardDrop) {
+			didHardDrop = false;
+			checkFullRows();
+			checkLevel();
+			currentPiece.hasDescended = true;
+		}
+		
 		if (checkToDescend()) {
 			descendPiece();
 
@@ -131,6 +148,13 @@ void gamePlayLoop() {
 				score += 1;
 				lcd.setCursor(7, 1);
 				lcd.print(String(score));
+			}
+
+			if (!checkToDescend()) {	// if we can't descend the piece anymore, we can check now for full rows
+				if (checkFullRows() > 0) {	// if we have found full rows, we can say our piece has descended
+					currentPiece.hasDescended = true;
+				}
+				checkLevel();
 			}
 		} else {
 			currentPiece.hasDescended = true;
@@ -143,10 +167,6 @@ void gamePlayLoop() {
 
 			// getting ready to generate another piece
 			currentPiece.id = -1;
-			currentPiece.hasDescended = false;
-			currentPiece.rowsDescended = 0;
-			
-			checkScore();
 		}
 
 		lastDescendingTime = millis();
@@ -196,7 +216,6 @@ void createPiece() {
 			currentPiece.column = START_COLUMN + 2;
 	}
 
-	//setLedPattern(1);
 	setGameMatrixPattern(1);
 }
 
@@ -325,7 +344,8 @@ int checkToRotate(int rotatedMatrix[4][4]) {
 	return true;
 }
 
-void checkScore() {
+// returns the number of full rows found in the matrix
+int checkFullRows() {
 	int completeRows = 0;	// count the full rows
 
 	for (int row = START_LINE; row < FINISH_LINE; row++) {
@@ -359,12 +379,15 @@ void checkScore() {
 		default:
 			Serial.println("How?! IT IS IMPOSSIBLE!");
 	}
-	Serial.println(completeRows);
+	
 	if (completeRows > 0) {
 		lcd.setCursor(7, 1);
 		lcd.print(String(score));
+		totalFullRows += completeRows;
 		eraseCompleteRows();
 	}
+
+	return completeRows;
 }
 
 void eraseCompleteRows() {
@@ -385,6 +408,9 @@ void eraseCompleteRows() {
 			}
 		}
 	}
+
+	Serial.print(" > Total Full Rows Erased: ");
+	Serial.println(totalFullRows);
 }
 
 // dropType = -1 for soft drop OR 1 for hard drop
@@ -394,13 +420,29 @@ void dropPiece(int dropType) {
 			descendingDelay = SOFT_DROP_DELAY;
 			break;
 		case 1:
-			while (checkToDescend()) {
-				descendPiece();
-				score += 2;
+			if (horizontalState == 0) {		// we will make a hard drop if the joystick is inclined only UP, not for any other compund direction (UP_LEFT/UP_RIGHT)
+				while (checkToDescend()) {
+					descendPiece();
+					score += 2;
+				}
+				didHardDrop = true;
+				lcd.setCursor(7, 1);
+				lcd.print(String(score));	
 			}
-			lcd.setCursor(7, 1);
-			lcd.print(String(score));
 			break;
+	}
+}
+
+void checkLevel() {
+	if (totalFullRows / DIFFICULTY_INCREASING_THRESHOLD + 1 > level) {
+		level++;
+		if (level <= 5) {
+			usualDescendingDelay -= DIFFICULTY_INCREASING_SPEED;		
+		}
+		lcd.setCursor(7, 0);
+		lcd.print(String(level));
+		Serial.print(" > New Level: ");
+		Serial.println(level);
 	}
 }
 

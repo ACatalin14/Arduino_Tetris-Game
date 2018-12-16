@@ -18,7 +18,7 @@
 #define JOYSTICK_HORIZONTAL_RIGHT 0
 #define JOYSTICK_VERTICAL_UP 0			// the VRy value when joystick is inclined to up-most
 #define JOYSTICK_VERTICAL_DOWN 1023
-#define JOYSTICK_THRESHOLD 100				// a value of 10 means an X value from 0 to 10 will determine the joystick to trigger an event for left movement  
+#define JOYSTICK_THRESHOLD 100				// a value of 100 means an X value from 0 to 100 will determine the joystick to trigger an event for left movement  
 
 int gameState;	// current game state: 1 = waiting to begin the gameplay; 2 = gameplay; 3 = waiting to start again the game
 int lastGameState;	// it can help saying if the gameState changed
@@ -148,7 +148,7 @@ void checkButton( void (*onClickFunc)() ) {
 
 // this function will call onHorizontalTriggerFunc whenever the joystick is inclined towards LEFT (parameter == -1) or RIGHT (param == 1)
 void checkHorizontalAxis( void (*onHorizontalTriggerFunc)(int) ) {
-	int horizontalValue = analogRead(JOYSTICK_X_PIN);	// my joystick is inverted
+	int horizontalValue = analogRead(JOYSTICK_X_PIN);
 	int horizontalRead = 0;
 	
 	if (abs(horizontalValue - JOYSTICK_HORIZONTAL_LEFT) < JOYSTICK_THRESHOLD) {
@@ -178,7 +178,7 @@ void checkHorizontalAxis( void (*onHorizontalTriggerFunc)(int) ) {
 
 // this function will call onVerticalTriggerFunc whenever the joystick is inclined towards DOWN (parameter == -1) or UP (param == 1)
 void checkVerticalAxis( void (*onVerticalTriggerFunc)(int) ) {
-	int verticalValue = analogRead(JOYSTICK_Y_PIN);	// my joystick is inverted
+	int verticalValue = analogRead(JOYSTICK_Y_PIN);
 	int verticalRead = 0;
 	
 	if (abs(verticalValue - JOYSTICK_VERTICAL_DOWN) < JOYSTICK_THRESHOLD) {
@@ -188,16 +188,16 @@ void checkVerticalAxis( void (*onVerticalTriggerFunc)(int) ) {
 	}
 
 	if (verticalRead != lastVerticalState) {
-		lastDebounceVerticalTime = millis();	// we detected an event for joystick (LEFT or RIGHT)
+		lastDebounceVerticalTime = millis();	// we detected an event for joystick (DOWN or UP)
 	}
 	
 	if (millis() - lastDebounceVerticalTime > DEBOUNCE_JOYSTICK_DELAY) { // now we take care of that event
 		if (verticalRead != verticalState) {
 			verticalState = verticalRead;
 			
-			if (verticalState == -1) {	// LEFT
+			if (verticalState == -1) {	// DOWN
 				onVerticalTriggerFunc(-1);
-			} else if (verticalState == 1) {	// RIGHT
+			} else if (verticalState == 1) {	// UP
 				onVerticalTriggerFunc(1);
 			}	
 		}

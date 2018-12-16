@@ -10,11 +10,9 @@ int arrowOnScreen;				// 1 = the arrow is showing for the option, 0 = it is not 
 
 void gameEndSetup() {
 	lcd.clear();
-//	lcd.setCursor(3, 0);
-//	lcd.print("GAME OVER!");
 	lcd.setCursor(0, 0);
 	lcd.print("   Score: ");
-	lcd.print(score);
+	lcd.print(String(score));
 	lcd.setCursor(0, 1);
 	lcd.print("Try again? >YES");
 
@@ -30,6 +28,9 @@ void gameEndSetup() {
 
 	currentLedNumber = 0;
 	turnOnLeds = true;
+
+	Serial.print(" > Final Score: ");
+	Serial.println(score);
 }
 
 void gameEndLoop() {
