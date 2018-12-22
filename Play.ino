@@ -1,26 +1,26 @@
 #define NUMBER_OF_PIECES 8
-#define STARTING_SPEED 1750		// lower = faster
+#define STARTING_SPEED 1750					// lower = faster
 #define HORIZONTAL_MOVEMENT_DELAY 250
 #define SOFT_DROP_DELAY 100
 #define CHECKING_FULL_ROWS_DELAY 100
 #define DIFFICULTY_INCREASING_SPEED 350
 #define DIFFICULTY_INCREASING_THRESHOLD 5	// number of full rows needed to get to the next level
 
-int level;		// current level
-int usualDescendingDelay;	// this is the normal delay for descending a piece at a given level
-int descendingDelay;		// a variable which can be modified by soft drops of pieces
+int level;							// current level
+int usualDescendingDelay;			// this is the normal delay for descending a piece at a given level
+int descendingDelay;				// a variable which can be modified by soft drops of pieces
 unsigned long lastDescendingTime;	// last time we updated the matrix for descending a piece
 unsigned long lastHorizontalMovementTime;
 int totalFullRows;
-int didHardDrop;
+int didHardDrop;					// true/false
 
 struct Piece {
 	int id;
-	int shape[4][4];	// the current shape of the piece
-	int boundingBoxSize;// length of the square's edge of the boundig box (a number between 1 and 4)
-	int row, column;	// row/column between 0 and 7 of the boundigBox's top-left corner
-	int hasDescended;	// true when current piece descended completely
-	int rowsDescended;	// number of rows descended by the piece; when it is 0, it's game over
+	int shape[4][4];		// the current shape of the piece
+	int boundingBoxSize;	// length of the square's edge of the boundig box (a number between 1 and 4)
+	int row, column;		// row/column of the boundigBox's top-left corner in the gameMatrix
+	int hasDescended;		// true when current piece descended completely
+	int rowsDescended;		// number of rows descended by the piece; when it is 0, it's game over
 };
 
 Piece currentPiece;
@@ -107,9 +107,6 @@ void gamePlaySetup() {
 	descendingDelay = usualDescendingDelay;
 	lastDescendingTime = millis();
 	lastHorizontalMovementTime = millis();
-
-	Serial.println();
-	Serial.println(" > NEW GAME ");
 }
 
 void gamePlayLoop() {
@@ -129,10 +126,12 @@ void gamePlayLoop() {
 	checkButton(rotatePiece);
 	checkVerticalAxis(dropPiece);
 
-	if (verticalState == 0) {	// check if there is not a sofr drop turned on
+	// check if there is not a soft drop turned on
+	if (verticalState == 0) {
 		descendingDelay = usualDescendingDelay;
 	}
-	
+
+	// check time for descending the piece
 	if (millis() - lastDescendingTime > descendingDelay || didHardDrop) {
 		if (didHardDrop) {
 			didHardDrop = false;
@@ -150,18 +149,21 @@ void gamePlayLoop() {
 				lcd.print(String(score));
 			}
 
-			if (!checkToDescend()) {	// if we can't descend the piece anymore, we can check now for full rows
-				if (checkFullRows() > 0) {	// if we have found full rows, we can say our piece has descended
+			if (!checkToDescend()) {	
+				// if we can't descend the piece anymore, we can check now for full rows
+				if (checkFullRows() > 0) {	
+					// if we have found full rows, we can say our piece has descended, so that we can create immediately a new piece
 					currentPiece.hasDescended = true;
+					checkLevel();
 				}
-				checkLevel();
 			}
 		} else {
 			currentPiece.hasDescended = true;
 		}
 
 		if (currentPiece.hasDescended) {
-			if (currentPiece.rowsDescended == 0) {	// check for game over
+			// check for game over
+			if (currentPiece.rowsDescended == 0) {
 				gameState = 3;
 			}
 
@@ -266,7 +268,7 @@ void moveHorizontally(int movement) {
 	int ableToMove = true;	
 	int startingCol;
 	switch (movement) {
-		case -1:		// move towards LEFT
+		case -1:		// move piece towards LEFT
 			startingCol = 0;
 			break;
 		case 1:			// move piece towards RIGHT
@@ -284,7 +286,8 @@ void moveHorizontally(int movement) {
 			}
 		}
 
-		if (mostExtremeDotColumn >= 0 && mostExtremeDotColumn < currentPiece.boundingBoxSize) { // our piece has a dot on the current row
+		if (mostExtremeDotColumn >= 0 && mostExtremeDotColumn < currentPiece.boundingBoxSize) { 
+			// our piece has a dot on the current row
 			// check if there is an object beside our piece at current row
 			int interestColumn = currentPiece.column + mostExtremeDotColumn + movement;
 			int interestRow = currentPiece.row + row;
@@ -307,23 +310,19 @@ void moveHorizontally(int movement) {
 void rotatePiece() {
 	int dim = currentPiece.boundingBoxSize;	// our dimension
 	int rotatedShape[4][4];
-	
-	for (int i = 0; i < dim; i++) {	// calculate the rotated matrix
+
+	// calculate the rotated matrix
+	for (int i = 0; i < dim; i++) {
 		for (int j = 0; j < dim; j++) {
 			rotatedShape[i][j] = currentPiece.shape[dim - 1 - j][i];
 		}
 	}
 	
 	if (checkToRotate(rotatedShape)) {
-		// now assign the rotated matrix to our shape
-		for (int i = 0; i < dim; i++) {
-			for (int j = 0; j < dim; j++) {
-				currentPiece.shape[i][j] = rotatedShape[i][j];
-			}
-		}
+		setGameMatrixPattern(0);
+		assign(currentPiece.shape, rotatedShape);
+		setGameMatrixPattern(1);
 	}
-
-	setGameMatrixPattern(1);
 }
 
 // returns true if we are able to make a rotation, and false otherwise
@@ -337,10 +336,13 @@ int checkToRotate(int rotatedMatrix[4][4]) {
 			int interestCol = currentPiece.column + col;
 			if (rotatedMatrix[row][col] == 1 &&
 				rotatedMatrix[row][col] == gameMatrix[interestRow][interestCol]) {
-					return false;	// we're not able to rotate
+					// we're not able to rotate
+					return false;
 			}
 		}
 	}
+
+	setGameMatrixPattern(1);
 	return true;
 }
 
@@ -377,7 +379,7 @@ int checkFullRows() {
 			score += 1200 * level;
 			break;
 		default:
-			Serial.println("How?! IT IS IMPOSSIBLE!");
+			Serial.println("checkFullRows(): How?! IT IS IMPOSSIBLE!");
 	}
 	
 	if (completeRows > 0) {
@@ -400,7 +402,8 @@ void eraseCompleteRows() {
 				break;
 			}
 		}
-		if (complete) {	// if we found a full row, we erase it by making succesive assignments from bottom to top
+		if (complete) {	
+			// if we found a full row, we erase it by making succesive assignments from bottom to top
 			for (int col = START_COLUMN; col < FINISH_COLUMN; col++) {
 				for (int row = currentRow; row >= START_LINE; row--) {
 					gameMatrix[row][col] = gameMatrix[row - 1][col];
@@ -408,9 +411,6 @@ void eraseCompleteRows() {
 			}
 		}
 	}
-
-	Serial.print(" > Total Full Rows Erased: ");
-	Serial.println(totalFullRows);
 }
 
 // dropType = -1 for soft drop OR 1 for hard drop
@@ -420,7 +420,8 @@ void dropPiece(int dropType) {
 			descendingDelay = SOFT_DROP_DELAY;
 			break;
 		case 1:
-			if (horizontalState == 0) {		// we will make a hard drop if the joystick is inclined only UP, not for any other compund direction (UP_LEFT/UP_RIGHT)
+			// we will make a hard drop if the joystick is inclined only UP, not for any other compund direction (UP_LEFT/UP_RIGHT)
+			if (horizontalState == 0) {
 				while (checkToDescend()) {
 					descendPiece();
 					score += 2;
@@ -441,8 +442,6 @@ void checkLevel() {
 		}
 		lcd.setCursor(7, 0);
 		lcd.print(String(level));
-		Serial.print(" > New Level: ");
-		Serial.println(level);
 	}
 }
 
