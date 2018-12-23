@@ -27,7 +27,7 @@ You can perform the following operations on the descending piece:
 * soft drop (increase its descending speed for bonus score points), by holding the joystick in the _DOWN_ position on the vertical axis;
 * hard drop (force the piece to fall directly where it's supposed to go), by moving the joystick once in the _UP_ position on the vertical axis;
 
-If the piece can't descend anymore, then it's **Game Over**.  
+If the piece can't descend anymore from the moment it spawned, then it's **Game Over**.  
 
 As any arcade game, this one has **level** and **score** functionalities. The game starts at **Level 1**. Every time you burn 5 rows, the game takes you to the next level. Each level has its own difficulty (the piece's descending speed) and after **Level 5**, each one has the same descending speed. The score starts from **0** and by gaining score points you can see at the end of the game how much progress you have made. Here is a list with all possible ways to gain score points (_**SP**_):
 * _40 * currentLevel **SP**_, by burning **1 row** using one piece;
