@@ -23,7 +23,7 @@ You are given an 8x8 matrix where tetris pieces are falling from above. There ar
 A piece is spawned in the upper bound of the matrix, and each iteration, it's falling down until it reaches the floor or another piece underneath. If the descended piece creates a full row on the matrix, then the row is burned, and all the rows above it will descend one unit;  
 You can perform the following operations on the descending piece:
 * moving horizontally, by using the joystick's horizontal axis;
-* counterclockwise rotation, by presing the joystick's button;
+* clockwise rotation, by presing the joystick's button;
 * soft drop (increase its descending speed for bonus score points), by holding the joystick in the _DOWN_ position on the vertical axis;
 * hard drop (force the piece to fall directly where it's supposed to go), by moving the joystick once in the _UP_ position on the vertical axis;
 
